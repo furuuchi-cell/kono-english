@@ -1,0 +1,5 @@
+Initial commit: KONO式英単語 web app
+
+React + TypeScript + Firebase (Auth / Firestore / Hosting) で構成された
+中学英単語学習Webアプリ。生徒・管理者の両ロールに対応し、
+単語学習・テスト・文法演習・クラス管理機能を提供する。

@@ -1,0 +1,354 @@
+{
+  "classWordSetId": "AS2",
+  "weeks": [
+    {
+      "weekNumber": 1,
+      "weekLabel": "第1週 4月1週目",
+      "theme": "品詞(1) 動詞・準動詞",
+      "thinkingFlow": [
+        { "key": "verb_or_quasi", "label": "V or (V)", "hint": "動詞か準動詞か。選択肢を動詞グループ/準動詞グループに分けよう" },
+        { "key": "trans_intrans", "label": "自 or 他", "hint": "自動詞か他動詞か。後ろに目的語が必要かで判断" },
+        { "key": "active_passive", "label": "能 or 受", "hint": "意味上の主語と動詞の関係。する側か、される側か" },
+        { "key": "tense", "label": "時制", "hint": "現在・過去・完了・進行、どの時制が適切か" },
+        { "key": "meaning", "label": "意味", "hint": "文脈に最も合う意味を選ぶ" },
+        { "key": "usage", "label": "語法", "hint": "その動詞・表現が取る決まった形（慣用・語法）" }
+      ],
+      "problems": [
+        {
+          "sentence": "Let's (　　) about that problem later. It's not urgent.",
+          "choices": [
+            { "text": "not talk", "isCorrect": true, "reason": "Let's (= Let us) の後ろは動詞の原形のみ。否定は let's not V。" },
+            { "text": "don't talk", "isCorrect": false, "reason": "let's の否定に don't は使わない。" },
+            { "text": "not talking", "isCorrect": false, "reason": "Let's の後は動詞の原形。-ing 形は不可。" },
+            { "text": "not to talk", "isCorrect": false, "reason": "Let's の後は動詞の原形。to不定詞は不可。" }
+          ],
+          "primaryStepKey": "usage",
+          "explanation": "①と②は動詞、③と④は準動詞。Let's (= Let us)の後ろにはそのまま動詞の原形だけを続けるから、①が正解。let's V を否定で用いる場合は、通常 let's not V とすることに注意。",
+          "eliminationSteps": [
+            {
+              "stepKey": "verb_or_quasi",
+              "question": "Let's (= Let us) の直後に来るのは？",
+              "options": [
+                { "label": "動詞の原形", "isCorrect": true },
+                { "label": "準動詞 (-ing / to不定詞)", "isCorrect": false }
+              ],
+              "eliminateOriginalIndexes": [2, 3],
+              "hint": "Let's = Let us。使役の let は let O V の形で、Vは動詞の原形。"
+            },
+            {
+              "stepKey": "usage",
+              "question": "let's V を否定するときの形は？",
+              "options": [
+                { "label": "let's not V", "isCorrect": true },
+                { "label": "let's don't V", "isCorrect": false }
+              ],
+              "eliminateOriginalIndexes": [1],
+              "hint": "命令文系の否定は通常 don't を使うが、Let's の否定だけは例外的に let's not V。"
+            }
+          ]
+        },
+        {
+          "sentence": "Tom had his smartphone (　　) while he was on the train.",
+          "choices": [
+            { "text": "steal", "isCorrect": false, "reason": "have + O + C の C に原形は来ない（使役でも have O V は人にさせる意味で、今回Oはモノ）。" },
+            { "text": "stolen", "isCorrect": true, "reason": "スマホは「盗まれる」側。have + O + C の構文で、Oとstealが受動関係。過去分詞 stolen が正解。" },
+            { "text": "stealing", "isCorrect": false, "reason": "能動関係を表すため、「スマホが盗む」となり不自然。" },
+            { "text": "stole", "isCorrect": false, "reason": "Cの位置に過去形は入れられない。" }
+          ],
+          "primaryStepKey": "active_passive",
+          "explanation": "選択肢に着目すると、steal（盗む）の形を選ぶ問題だと分かる。文章の前半に着目すると、have + O + C の構文であることが分かる。この構文ではOとCの関係によって、Cの形、つまりは steal の形が決まる。今回は O = his smartphone なので、彼のスマートフォンは盗むのか、盗まれるのかを考えると、自ずと後者であると分かる。「スマートフォンが盗まれる」ということは受動関係にあるため、②の過去分詞形である stolen が正解となる。",
+          "eliminationSteps": [
+            {
+              "stepKey": "verb_or_quasi",
+              "question": "had his smartphone (　　) は have + O + C の構文。Cの位置に来られる形は？",
+              "options": [
+                { "label": "原形・現在分詞・過去分詞のいずれか", "isCorrect": true },
+                { "label": "過去形", "isCorrect": false }
+              ],
+              "eliminateOriginalIndexes": [3],
+              "hint": "have + O + C のCには動詞の準動詞形（原形・分詞）が入る。過去形は入らない。"
+            },
+            {
+              "stepKey": "active_passive",
+              "question": "O = his smartphone と steal の関係は？",
+              "options": [
+                { "label": "能動（スマホが盗む）", "isCorrect": false },
+                { "label": "受動（スマホが盗まれる）", "isCorrect": true }
+              ],
+              "eliminateOriginalIndexes": [0, 2],
+              "hint": "スマホが何かを盗むことは普通ない。Oは「される側」と考える。"
+            }
+          ]
+        },
+        {
+          "sentence": "My parents finally (　　) me travel abroad by myself after much discussion.",
+          "choices": [
+            { "text": "allowed", "isCorrect": false, "reason": "allow O to V の形を取るため、to が必要。ここでは直後が me travel で to がないので不適。" },
+            { "text": "let", "isCorrect": true, "reason": "使役動詞 let O V の形。「許可して好きなように〜させる」の意味で文脈に合う。" },
+            { "text": "made", "isCorrect": false, "reason": "使役 make O V の形は取れるが、「強制的に〜させる」の意味で文脈に合わない。" },
+            { "text": "got", "isCorrect": false, "reason": "get O to V の形を取るため、to が必要。" }
+          ],
+          "primaryStepKey": "usage",
+          "explanation": "( )が My parents という名詞（主語）と me という名詞で挟まれているため、( )内には他動詞があてはまるとわかる。allow は allow O to V、get は get O to V の形。今回、( )の直後に me travel と to が抜けているため、これらは不適。let と made は使役の用法の場合 let/made O V という形を取る。意味は make が「強制的に〜させる」、let が「許可して好きなように〜させる」。「ついに許可を与えて〜させる」の意味が自然なので let が正解。",
+          "eliminationSteps": [
+            {
+              "stepKey": "usage",
+              "question": "( ) の直後は me travel（toなし）。原形のVを直接続けられるのは？",
+              "options": [
+                { "label": "let / make（V O 原形）", "isCorrect": true },
+                { "label": "allow / get（V O to V）", "isCorrect": false }
+              ],
+              "eliminateOriginalIndexes": [0, 3],
+              "hint": "allow と get は to不定詞を取る。let と make は原形のまま続けられる。"
+            },
+            {
+              "stepKey": "meaning",
+              "question": "「長時間の議論の末、ようやく〜させる」のニュアンスは？",
+              "options": [
+                { "label": "強制的にさせる（make）", "isCorrect": false },
+                { "label": "許可して好きにさせる（let）", "isCorrect": true }
+              ],
+              "eliminateOriginalIndexes": [2],
+              "hint": "「議論の末に許可した」という流れ。強制ではなく許可の意味。"
+            }
+          ]
+        },
+        {
+          "sentence": "Although the journey was quite (　　), we all had a great time.",
+          "choices": [
+            { "text": "exhausted", "isCorrect": false, "reason": "exhausted は「人が疲れ切った」意味で、人が主語であるべき。journey を主語に取れない。" },
+            { "text": "exhausting", "isCorrect": true, "reason": "exhausting は「（人を）疲れさせるような」の意味で物事が主語になれる。「旅は骨の折れるものだった」で文脈に合う。" },
+            { "text": "exciting", "isCorrect": false, "reason": "「〜だったが楽しい時間を過ごした」という逆接の流れに合わない。" },
+            { "text": "excited", "isCorrect": false, "reason": "人が主語になるべきで、journey を主語に取れない。" }
+          ],
+          "primaryStepKey": "meaning",
+          "explanation": "分詞形容詞の問題。元の動詞が他動詞の場合、現在分詞は「〜させるような」、過去分詞は「〜している/〜する」（人がどういう感情を抱くか）を表す。the journey was quite ( )、また文全体の although SV「〜だったが良い時間を過ごした」の流れに合うのは exhausting（骨の折れる）。",
+          "eliminationSteps": [
+            {
+              "stepKey": "meaning",
+              "question": "Although で繋がる文の前後関係は？「楽しい時間を過ごした」の逆になる前半の意味は？",
+              "options": [
+                { "label": "ネガティブ（疲れる/つらい等）", "isCorrect": true },
+                { "label": "ポジティブ（楽しい/わくわく等）", "isCorrect": false }
+              ],
+              "eliminateOriginalIndexes": [2, 3],
+              "hint": "although は逆接。前半は「楽しかった」と矛盾する内容（=ネガティブ）。exciting/excited はポジティブ語なので不適。"
+            },
+            {
+              "stepKey": "active_passive",
+              "question": "主語は the journey（モノ）。モノを主語にして「〜させるような」と表す分詞形は？",
+              "options": [
+                { "label": "現在分詞 (-ing)", "isCorrect": true },
+                { "label": "過去分詞 (-ed)", "isCorrect": false }
+              ],
+              "eliminateOriginalIndexes": [0],
+              "hint": "感情系の他動詞: モノが主語なら -ing（〜させる）、人が主語なら -ed（〜される/感じる）。"
+            }
+          ]
+        },
+        {
+          "sentence": "Fish smells great (　　) over an open flame.",
+          "choices": [
+            { "text": "when grilled", "isCorrect": true, "reason": "主節と when 節の主語が同じ場合、when 節の主語と be 動詞は省略できる。Fish が主語で、Fish は「焼かれる」側なので受動態 when (it is) grilled が自然。" },
+            { "text": "when grilling", "isCorrect": false, "reason": "grill は他動詞なので目的語が必要。主語 Fish は「焼く」側ではないので能動関係が不自然。" },
+            { "text": "with when grilled", "isCorrect": false, "reason": "前置詞 with の直後に接続詞 when を続けることはできない。" },
+            { "text": "with when grilling", "isCorrect": false, "reason": "前置詞 with の直後に接続詞 when を続けることはできない。" }
+          ],
+          "primaryStepKey": "active_passive",
+          "explanation": "接続詞 when に関する問題。前置詞 with の後ろに接続詞 when は続けられないので③④は不適。主節と when 節の主語が同じ場合、when 節内の主語と be 動詞はしばしば省略される。Fish が主語で、grill は「焼く」の他動詞。受動態 when (it is) grilled とすれば意味が通る。",
+          "eliminationSteps": [
+            {
+              "stepKey": "usage",
+              "question": "前置詞 with の直後に接続詞 when を続けられる？",
+              "options": [
+                { "label": "続けられる", "isCorrect": false },
+                { "label": "続けられない", "isCorrect": true }
+              ],
+              "eliminateOriginalIndexes": [2, 3],
+              "hint": "前置詞の後ろは名詞・名詞句が来るのが原則。接続詞 when は続けられない。"
+            },
+            {
+              "stepKey": "active_passive",
+              "question": "Fish と grill（〜を焼く）の関係は？",
+              "options": [
+                { "label": "能動（Fish が焼く）", "isCorrect": false },
+                { "label": "受動（Fish が焼かれる）", "isCorrect": true }
+              ],
+              "eliminateOriginalIndexes": [1],
+              "hint": "魚が何かを焼くことは普通ない。Fish は「焼かれる」側。受動なら過去分詞 grilled。"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "weekNumber": 3,
+      "weekLabel": "第3週 4月3週目",
+      "theme": "文・句・節",
+      "thinkingFlow": [
+        { "key": "sentence_type", "label": "文型判別", "hint": "平叙文・疑問文・感嘆文・付加疑問文のどれか" },
+        { "key": "phrase_or_clause", "label": "句 or 節", "hint": "入るのが語句なのか、SVを含む節なのか" },
+        { "key": "wh_word", "label": "疑問詞", "hint": "What/Why/How/How come など。目的に応じて選ぶ" },
+        { "key": "word_order", "label": "語順", "hint": "間接疑問文は平叙文の語順。How come の後も平叙文の語順" },
+        { "key": "idiom", "label": "慣用表現", "hint": "Why don't we, What is S like など、決まり文句" }
+      ],
+      "problems": [
+        {
+          "sentence": "I wonder (　　) between Osaka and Kanazawa.",
+          "choices": [
+            { "text": "how long it is", "isCorrect": false, "reason": "how long は「長さ・時間」を尋ねるが、都市間は「距離」なので不適。" },
+            { "text": "how long is it", "isCorrect": false, "reason": "間接疑問文は平叙文の語順なので、is it は不可。" },
+            { "text": "how far it is", "isCorrect": true, "reason": "距離を尋ねる how far ＋ 間接疑問文の平叙文語順 (it is) が正しい。" },
+            { "text": "how far is it", "isCorrect": false, "reason": "間接疑問文は平叙文の語順なので、is it は不可。" }
+          ],
+          "primaryStepKey": "word_order",
+          "explanation": "距離を尋ねる疑問詞は how far。I wonder の目的語となる間接疑問文なので、後ろは平叙文の語順（it is）になる。",
+          "eliminationSteps": [
+            {
+              "stepKey": "wh_word",
+              "question": "「大阪と金沢の間」を尋ねるのに使う疑問詞は？",
+              "options": [
+                { "label": "how far（距離）", "isCorrect": true },
+                { "label": "how long（時間・長さ）", "isCorrect": false }
+              ],
+              "eliminateOriginalIndexes": [0, 1],
+              "hint": "距離を尋ねるのは how far。how long は「時間・長さ」。"
+            },
+            {
+              "stepKey": "word_order",
+              "question": "I wonder の目的語となる間接疑問文の語順は？",
+              "options": [
+                { "label": "平叙文の語順 (it is)", "isCorrect": true },
+                { "label": "疑問文の語順 (is it)", "isCorrect": false }
+              ],
+              "eliminateOriginalIndexes": [3],
+              "hint": "間接疑問文（名詞節として動詞の目的語になる場合）は平叙文の語順。"
+            }
+          ]
+        },
+        {
+          "sentence": "(　　) you didn't join the party yesterday?",
+          "choices": [
+            { "text": "Why", "isCorrect": false, "reason": "Why を使う場合は Why didn't you join...? の倒置語順になるので不適。" },
+            { "text": "What", "isCorrect": false, "reason": "What 単独では理由を尋ねる意味にならない。" },
+            { "text": "How", "isCorrect": false, "reason": "How 単独では理由を尋ねる意味にならない。" },
+            { "text": "How come", "isCorrect": true, "reason": "How come の後ろは平叙文の語順（SV）。you didn't join という平叙文に接続できる。" }
+          ],
+          "primaryStepKey": "idiom",
+          "explanation": "空所の後ろが you didn't join と平叙文の語順になっているため、理由を尋ねる How come が入る（Why didn't you join 〜? と同じ意味）。",
+          "eliminationSteps": [
+            {
+              "stepKey": "wh_word",
+              "question": "「なぜ昨日パーティに来なかったの？」と理由を尋ねている。理由を尋ねる疑問詞・表現はどれ？",
+              "options": [
+                { "label": "Why または How come", "isCorrect": true },
+                { "label": "What または How", "isCorrect": false }
+              ],
+              "eliminateOriginalIndexes": [1, 2],
+              "hint": "What/How 単独では理由を尋ねる意味にはならない。"
+            },
+            {
+              "stepKey": "word_order",
+              "question": "( ) の後ろは you didn't join という平叙文の語順。この語順を取れるのは？",
+              "options": [
+                { "label": "How come（後ろは平叙文）", "isCorrect": true },
+                { "label": "Why（後ろは倒置語順 didn't you）", "isCorrect": false }
+              ],
+              "eliminateOriginalIndexes": [0],
+              "hint": "Why は通常 Why didn't you join...? と倒置。How come は後ろが平叙文の語順になる。"
+            }
+          ]
+        },
+        {
+          "sentence": "There is a big dog in your garden, (　　)?",
+          "choices": [
+            { "text": "aren't they", "isCorrect": false, "reason": "主語が a big dog（単数）なので aren't they は不適。" },
+            { "text": "isn't it", "isCorrect": false, "reason": "There is 構文の付加疑問では代名詞ではなく there を使う。" },
+            { "text": "don't you", "isCorrect": false, "reason": "be 動詞の文なので do/don't は使わない。" },
+            { "text": "isn't there", "isCorrect": true, "reason": "There is 〜 構文の付加疑問文は、代名詞の代わりに there を用いて isn't there? となる。" }
+          ],
+          "primaryStepKey": "sentence_type",
+          "explanation": "There is 〜 構文の付加疑問文は、代名詞の代わりに there を用いて isn't there? とする。",
+          "eliminationSteps": [
+            {
+              "stepKey": "sentence_type",
+              "question": "本文は There is 〜（be動詞）の文。付加疑問の動詞は？",
+              "options": [
+                { "label": "be 動詞 (is/isn't)", "isCorrect": true },
+                { "label": "do/don't", "isCorrect": false }
+              ],
+              "eliminateOriginalIndexes": [2],
+              "hint": "付加疑問は本文の動詞に合わせる。be動詞の文は be動詞で受ける。"
+            },
+            {
+              "stepKey": "idiom",
+              "question": "There is 構文の付加疑問では、主語の代わりに何を使う？",
+              "options": [
+                { "label": "there（そのまま）", "isCorrect": true },
+                { "label": "代名詞 (it / they)", "isCorrect": false }
+              ],
+              "eliminateOriginalIndexes": [0, 1],
+              "hint": "There is 〜 → 〜, isn't there? が決まり文句。"
+            }
+          ]
+        },
+        {
+          "sentence": "\"There's nothing interesting to do on rainy days like this.\" \"Why (　　) we go to the movies?\"",
+          "choices": [
+            { "text": "do", "isCorrect": false, "reason": "Why do we go は「なぜ行くのか？」という純粋な疑問になり、提案の意味にならない。" },
+            { "text": "did", "isCorrect": false, "reason": "過去形では提案の意味にならない。" },
+            { "text": "didn't", "isCorrect": false, "reason": "Why didn't we は過去の後悔を表す表現で、今の提案にならない。" },
+            { "text": "don't", "isCorrect": true, "reason": "Why don't we 〜? は「（一緒に）〜しませんか」という提案を表す慣用表現。" }
+          ],
+          "primaryStepKey": "idiom",
+          "explanation": "Why don't we do 〜? で「（一緒に）〜しませんか」という提案を表す慣用表現。",
+          "eliminationSteps": [
+            {
+              "stepKey": "tense",
+              "question": "後半は we go（現在形）。( ) も同じ時制。現在形は？",
+              "options": [
+                { "label": "do / don't（現在形）", "isCorrect": true },
+                { "label": "did / didn't（過去形）", "isCorrect": false }
+              ],
+              "eliminateOriginalIndexes": [1, 2],
+              "hint": "助動詞の時制は本動詞と一致させる。we go と現在形なので、do/don't を選ぶ。"
+            },
+            {
+              "stepKey": "idiom",
+              "question": "「(一緒に)〜しませんか」という提案を表す表現は？",
+              "options": [
+                { "label": "Why don't we 〜?", "isCorrect": true },
+                { "label": "Why do we 〜?", "isCorrect": false }
+              ],
+              "eliminateOriginalIndexes": [0],
+              "hint": "Why don't we 〜? が「〜しませんか」の決まり文句。Why do we は単なる疑問。"
+            }
+          ]
+        },
+        {
+          "sentence": "What is the weather (　　) tomorrow?",
+          "choices": [
+            { "text": "like", "isCorrect": true, "reason": "What is S like? で「Sはどのようなものか」と特徴や様子を尋ねる決まり文句。前置詞 like の目的語が What になっている。" },
+            { "text": "for", "isCorrect": false, "reason": "What is S for? は「Sは何のためのもの？」の意味で、天気の様子を尋ねる意味にならない。" },
+            { "text": "about", "isCorrect": false, "reason": "What about 〜? はあるが、What is the weather about? は不自然。" },
+            { "text": "of", "isCorrect": false, "reason": "What is S of? の形は成立しない。" }
+          ],
+          "primaryStepKey": "idiom",
+          "explanation": "「明日の天気はどうですか」は What is the weather like tomorrow? と表現する。How is the weather tomorrow? の How を What ... like で表した形。",
+          "eliminationSteps": [
+            {
+              "stepKey": "idiom",
+              "question": "「Sはどのようなものか」と特徴・様子を尋ねる決まり文句は？",
+              "options": [
+                { "label": "What is S like?", "isCorrect": true },
+                { "label": "What is S for/about/of?", "isCorrect": false }
+              ],
+              "eliminateOriginalIndexes": [1, 2, 3],
+              "hint": "What is S like? = How is S? の言い換え。前置詞 like の目的語として What が文頭に出ている。"
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}
