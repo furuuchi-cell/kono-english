@@ -6,9 +6,8 @@ import { useAuth } from '../../contexts/AuthContext';
 import { WeeklyRange } from '../../types';
 import Header from '../common/Header';
 import { getRank, getAggregateRank } from '../../utils/rank';
-import wordsData from '../../data/words.json';
-
-const allWords = wordsData as any[];
+import { loadBaseWords } from '../../hooks/useWords';
+import { Word } from '../../types';
 
 const RankBadge: React.FC<{ accuracyPercent: number; size?: 'sm' | 'md' }> = ({ accuracyPercent, size = 'md' }) => {
   const info = getRank(accuracyPercent);
@@ -35,11 +34,18 @@ const QuizHistoryPage: React.FC = () => {
   const [loading, setLoading] = useState(true);
   const [rangeFilter, setRangeFilter] = useState<string>('all');
   const [expandedId, setExpandedId] = useState<string | null>(null);
+  const [allWords, setAllWords] = useState<Word[]>([]);
 
   useEffect(() => {
     const load = async () => {
       if (!currentUser) return;
-      const snap = await getDocs(collection(db, 'users', currentUser.uid, 'quizResults'));
+      // 履歴・範囲・単語データを並列取得（単語データは動的import）
+      const [snap, wordsPromise] = await Promise.all([
+        getDocs(collection(db, 'users', currentUser.uid, 'quizResults')),
+        loadBaseWords(),
+      ]);
+      setAllWords(wordsPromise);
+
       let all = snap.docs.map((d) => ({ id: d.id, ...d.data() })) as any[];
       if (classId) all = all.filter((q) => q.classId === classId);
       all.sort((a, b) => (b.completedAt?.seconds || 0) - (a.completedAt?.seconds || 0));

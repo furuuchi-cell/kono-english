@@ -7,13 +7,10 @@ import { ClassData, WeeklyRange, TestData, WordProgress } from '../../types';
 import Header from '../common/Header';
 import Tutorial from '../common/Tutorial';
 import { getRank } from '../../utils/rank';
-import wordsData from '../../data/words.json';
-import { TOTAL_WORDS_BY_SET } from '../../hooks/useWords';
-
-const allWords = wordsData as any[];
+import { TOTAL_WORDS_BY_SET, BASE_WORDS_COUNT } from '../../hooks/useWords';
 
 const getTotalWords = (cls: ClassData): number =>
-  (cls.wordSetId ? TOTAL_WORDS_BY_SET[cls.wordSetId] : undefined) ?? allWords.length;
+  (cls.wordSetId ? TOTAL_WORDS_BY_SET[cls.wordSetId] : undefined) ?? BASE_WORDS_COUNT;
 
 interface ClassRanking {
   topThree: { name: string; mastered: number }[];

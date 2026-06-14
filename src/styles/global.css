@@ -153,3 +153,22 @@ button {
     font-size: 18px;
   }
 }
+
+/* 共通ローディングスピナー */
+@keyframes kono-spin {
+  to { transform: rotate(360deg); }
+}
+
+/* ボタン押下時の体感を改善（共通） */
+button:active {
+  transform: scale(0.98);
+  transition: transform 0.05s ease;
+}
+
+/* テキスト入力フォーカスのフィードバック改善 */
+input:focus,
+select:focus,
+textarea:focus {
+  border-color: var(--primary) !important;
+  box-shadow: 0 0 0 3px rgba(26, 58, 107, 0.12);
+}

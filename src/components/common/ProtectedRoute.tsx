@@ -1,8 +1,7 @@
-import React, { useEffect, useState } from 'react';
+import React from 'react';
 import { Navigate } from 'react-router-dom';
-import { doc, onSnapshot } from 'firebase/firestore';
-import { db } from '../../firebase';
 import { useAuth } from '../../contexts/AuthContext';
+import Loading from './Loading';
 
 interface Props {
   children: React.ReactNode;
@@ -10,31 +9,13 @@ interface Props {
 }
 
 const ProtectedRoute: React.FC<Props> = ({ children, requiredRole }) => {
-  const { currentUser, userProfile, loading } = useAuth();
-  const [maintenance, setMaintenance] = useState(false);
-  const [maintenanceChecked, setMaintenanceChecked] = useState(false);
-
-  useEffect(() => {
-    const unsubscribe = onSnapshot(
-      doc(db, 'settings', 'maintenance'),
-      (snapshot) => {
-        setMaintenance(snapshot.exists() && snapshot.data().enabled === true);
-        setMaintenanceChecked(true);
-      },
-      () => { setMaintenanceChecked(true); }
-    );
-    return unsubscribe;
-  }, []);
+  const { currentUser, userProfile, loading, maintenance, maintenanceChecked } = useAuth();
 
   // currentUser がいるのに userProfile がまだ null = Firestore 読込中
   const profileLoading = !!currentUser && !userProfile;
 
   if (loading || !maintenanceChecked || profileLoading) {
-    return (
-      <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '100vh' }}>
-        <div style={{ fontSize: 18, color: '#6b7280' }}>読み込み中...</div>
-      </div>
-    );
+    return <Loading branded message="読み込み中..." />;
   }
 
   if (!currentUser) {

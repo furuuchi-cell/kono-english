@@ -4,10 +4,11 @@ import {
   signInWithEmailAndPassword,
   createUserWithEmailAndPassword,
   signOut as firebaseSignOut,
+  sendPasswordResetEmail,
   updateProfile,
   User,
 } from 'firebase/auth';
-import { doc, getDoc, setDoc } from 'firebase/firestore';
+import { doc, getDoc, onSnapshot, setDoc } from 'firebase/firestore';
 import { auth, db } from '../firebase';
 import { UserProfile } from '../types';
 
@@ -15,10 +16,15 @@ interface AuthContextType {
   currentUser: User | null;
   userProfile: UserProfile | null;
   loading: boolean;
+  /** メンテナンス情報。maintenance=true で非管理者は閉鎖画面を表示 */
+  maintenance: boolean;
+  /** メンテナンスドキュメントの初回読み取りが完了したか */
+  maintenanceChecked: boolean;
   signIn: (email: string, password: string) => Promise<void>;
   signUp: (email: string, password: string, displayName: string, role: 'student' | 'admin', furigana?: string) => Promise<void>;
   signOut: () => Promise<void>;
   refreshProfile: () => Promise<void>;
+  resetPassword: (email: string) => Promise<void>;
 }
 
 const AuthContext = createContext<AuthContextType>({} as AuthContextType);
@@ -29,6 +35,21 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const [currentUser, setCurrentUser] = useState<User | null>(null);
   const [userProfile, setUserProfile] = useState<UserProfile | null>(null);
   const [loading, setLoading] = useState(true);
+  const [maintenance, setMaintenance] = useState(false);
+  const [maintenanceChecked, setMaintenanceChecked] = useState(false);
+
+  // メンテナンスフラグはアプリ全体で1回だけ購読する（旧実装では ProtectedRoute ごとに購読していた）
+  useEffect(() => {
+    const unsubscribe = onSnapshot(
+      doc(db, 'settings', 'maintenance'),
+      (snapshot) => {
+        setMaintenance(snapshot.exists() && snapshot.data()?.enabled === true);
+        setMaintenanceChecked(true);
+      },
+      () => { setMaintenanceChecked(true); }
+    );
+    return unsubscribe;
+  }, []);
 
   useEffect(() => {
     const unsubscribe = onAuthStateChanged(auth, async (user) => {
@@ -83,8 +104,23 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     setUserProfile(null);
   };
 
+  const resetPassword = async (email: string) => {
+    await sendPasswordResetEmail(auth, email);
+  };
+
   return (
-    <AuthContext.Provider value={{ currentUser, userProfile, loading, signIn, signUp, signOut, refreshProfile }}>
+    <AuthContext.Provider value={{
+      currentUser,
+      userProfile,
+      loading,
+      maintenance,
+      maintenanceChecked,
+      signIn,
+      signUp,
+      signOut,
+      refreshProfile,
+      resetPassword,
+    }}>
       {children}
     </AuthContext.Provider>
   );
