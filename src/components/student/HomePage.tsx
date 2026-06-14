@@ -6,6 +6,7 @@ import { useAuth } from '../../contexts/AuthContext';
 import { ClassData, WeeklyRange, TestData, WordProgress } from '../../types';
 import Header from '../common/Header';
 import Tutorial from '../common/Tutorial';
+import Loading from '../common/Loading';
 import { getRank } from '../../utils/rank';
 import { TOTAL_WORDS_BY_SET, BASE_WORDS_COUNT } from '../../hooks/useWords';
 
@@ -74,35 +75,50 @@ const HomePage: React.FC = () => {
   const [rangeFilter, setRangeFilter] = useState<Map<string, string>>(new Map()); // '' = 一覧, '__all__' = 総演習, rangeId = 特定の週
   const [loading, setLoading] = useState(true);
 
+  // メインデータ：クラス・ranges・progress・tests を並列に取得し、終わり次第ローディング解除。
+  // ランキング系（重い）は別 useEffect で後追い実行 → ファーストペイントを最速化。
   useEffect(() => {
-    const loadData = async () => {
+    let cancelled = false;
+    const loadMainData = async () => {
       if (!userProfile || !currentUser) return;
 
-      // Load classes
+      // 1) クラスを並列ロード
       const classIds = previewClassId ? [previewClassId] : (userProfile.classIds || []);
-      const loadedClasses: ClassData[] = [];
-      for (const cid of classIds) {
-        const classDoc = await getDoc(doc(db, 'classes', cid));
-        if (classDoc.exists()) {
-          loadedClasses.push({ id: classDoc.id, ...classDoc.data() } as ClassData);
-        }
-      }
+      const classDocs = await Promise.all(
+        classIds.map((cid) => getDoc(doc(db, 'classes', cid)))
+      );
+      if (cancelled) return;
+
+      const loadedClasses: ClassData[] = classDocs
+        .filter((d) => d.exists())
+        .map((d) => ({ id: d.id, ...d.data() } as ClassData));
       setClasses(loadedClasses);
 
-      // Load ranges and progress for each class
+      // 2) ranges / progress / tests を全クラス分まとめて並列ロード
+      const perClassResults = await Promise.all(
+        loadedClasses.map(async (cls) => {
+          const [rangesSnap, progressDoc, testsSnap] = await Promise.all([
+            getDocs(collection(db, 'classes', cls.id, 'ranges')),
+            getDoc(doc(db, 'users', currentUser.uid, 'progress', cls.id)),
+            getDocs(collection(db, 'classes', cls.id, 'tests')),
+          ]);
+          return { cls, rangesSnap, progressDoc, testsSnap };
+        })
+      );
+      if (cancelled) return;
+
       const rangeMap = new Map<string, WeeklyRange[]>();
       const statsMap = new Map<string, { mastered: number; review: number; unlearned: number }>();
       const progressDataMap = new Map<string, Map<number, WordProgress>>();
+      const testMap = new Map<string, TestData[]>();
 
-      for (const cls of loadedClasses) {
-        const rangesSnap = await getDocs(collection(db, 'classes', cls.id, 'ranges'));
-        const classRanges = rangesSnap.docs.map(d => ({ id: d.id, ...d.data() } as WeeklyRange));
-        classRanges.sort((a, b) => a.startId - b.startId);
+      for (const { cls, rangesSnap, progressDoc, testsSnap } of perClassResults) {
+        const classRanges = rangesSnap.docs
+          .map((d) => ({ id: d.id, ...d.data() } as WeeklyRange))
+          .sort((a, b) => a.startId - b.startId);
         rangeMap.set(cls.id, classRanges);
 
-        // Load progress
-        const progressDoc = await getDoc(doc(db, 'users', currentUser.uid, 'progress', cls.id));
-        let mastered = 0, review = 0, unlearned = 0;
+        let mastered = 0, review = 0;
         const wordProgressMap = new Map<number, WordProgress>();
         if (progressDoc.exists()) {
           const data = progressDoc.data();
@@ -113,18 +129,13 @@ const HomePage: React.FC = () => {
             else if (wp.status === 'review') review++;
           });
         }
-        unlearned = getTotalWords(cls) - mastered - review;
+        const unlearned = getTotalWords(cls) - mastered - review;
         statsMap.set(cls.id, { mastered, review, unlearned });
         progressDataMap.set(cls.id, wordProgressMap);
-      }
 
-      // Load tests for each class
-      const testMap = new Map<string, TestData[]>();
-      for (const cls of loadedClasses) {
-        const testsSnap = await getDocs(collection(db, 'classes', cls.id, 'tests'));
         const classTests = testsSnap.docs
-          .map(d => ({ id: d.id, ...d.data() } as TestData))
-          .filter(t => t.isActive);
+          .map((d) => ({ id: d.id, ...d.data() } as TestData))
+          .filter((t) => t.isActive);
         testMap.set(cls.id, classTests);
       }
 
@@ -132,138 +143,162 @@ const HomePage: React.FC = () => {
       setTests(testMap);
       setProgressStats(statsMap);
       setProgressData(progressDataMap);
-
-      // Load classmate rankings (async, non-blocking) — 2人以上いる場合のみ
-      const rankingMap = new Map<string, ClassRanking>();
-      for (const cls of loadedClasses) {
-        try {
-          const adminIds = new Set([cls.adminId, ...(cls.coAdminIds || [])]);
-          const allMemberIds = (cls.studentIds || []).filter((uid: string) => !adminIds.has(uid));
-
-          // roleがadminのユーザーも除外
-          const memberIds: string[] = [];
-          for (const uid of allMemberIds) {
-            try {
-              const userDoc = await getDoc(doc(db, 'users', uid));
-              if (userDoc.exists() && userDoc.data().role !== 'admin') {
-                memberIds.push(uid);
-              }
-            } catch {
-              memberIds.push(uid); // エラー時は含める
-            }
-          }
-          if (memberIds.length < 1) continue;
-
-          const myStats = statsMap.get(cls.id);
-          const myMastered = myStats?.mastered || 0;
-
-          // Load members' progress with names
-          const members: { uid: string; mastered: number }[] = [];
-          const idsToLoad = memberIds.slice(0, 30);
-          for (const uid of idsToLoad) {
-            if (uid === currentUser.uid) {
-              members.push({ uid, mastered: myMastered });
-              continue;
-            }
-            try {
-              const memberProgressDoc = await getDoc(doc(db, 'users', uid, 'progress', cls.id));
-              let memberMastered = 0;
-              if (memberProgressDoc.exists()) {
-                const data = memberProgressDoc.data();
-                Object.values(data).forEach((value: any) => {
-                  if (value.status === 'mastered') memberMastered++;
-                });
-              }
-              members.push({ uid, mastered: memberMastered });
-            } catch {
-              members.push({ uid, mastered: 0 });
-            }
-          }
-
-          // Sort by mastered count descending
-          members.sort((a, b) => b.mastered - a.mastered);
-          const myRank = members.findIndex(m => m.uid === currentUser.uid) + 1;
-
-          // Get top 3 with names
-          const topThree: { name: string; mastered: number }[] = [];
-          for (const m of members.slice(0, 3)) {
-            let name = 'Unknown';
-            try {
-              const userDoc = await getDoc(doc(db, 'users', m.uid));
-              if (userDoc.exists()) {
-                name = (userDoc.data() as any).displayName || 'Unknown';
-              }
-            } catch {}
-            topThree.push({ name, mastered: m.mastered });
-          }
-
-          rankingMap.set(cls.id, {
-            topThree,
-            myMastered,
-            myRank: myRank || 1,
-            totalMembers: memberIds.length,
-          });
-        } catch {
-          // ranking load failed, skip
-        }
-      }
-      setClassRankings(rankingMap);
-
-      // Load quiz rankings per class (from session answers)
-      try {
-        const quizRankingMap = new Map<string, { uid: string; displayName: string; rate: number; totalCorrect: number; totalQ: number }[]>();
-        for (const cls of loadedClasses) {
-          const sessionsSnap = await getDocs(
-            query(collection(db, 'classes', cls.id, 'sessions'), where('status', '==', 'finished'))
-          );
-          const studentStats = new Map<string, { displayName: string; totalCorrect: number; totalQ: number }>();
-          for (const sessionDoc of sessionsSnap.docs) {
-            const sessionData = sessionDoc.data();
-            const totalQ = sessionData.wordIds?.length || 0;
-            const answersSnap = await getDocs(collection(db, 'classes', cls.id, 'sessions', sessionDoc.id, 'answers'));
-            for (const answerDoc of answersSnap.docs) {
-              const data = answerDoc.data();
-              const uid = answerDoc.id;
-              const correct = (data.results || []).filter((r: any) => r.isCorrect).length;
-              if (!studentStats.has(uid)) {
-                studentStats.set(uid, { displayName: data.displayName || 'Unknown', totalCorrect: 0, totalQ: 0 });
-              }
-              const s = studentStats.get(uid)!;
-              s.totalCorrect += correct;
-              s.totalQ += totalQ;
-            }
-          }
-          const classAdminIds = new Set([cls.adminId, ...(cls.coAdminIds || [])]);
-          // roleがadminのユーザーも除外
-          const adminUids = new Set<string>();
-          const statsEntries = Array.from(studentStats.entries());
-          for (const [uid] of statsEntries) {
-            if (classAdminIds.has(uid)) { adminUids.add(uid); continue; }
-            try {
-              const uDoc = await getDoc(doc(db, 'users', uid));
-              if (uDoc.exists() && uDoc.data().role === 'admin') adminUids.add(uid);
-            } catch {}
-          }
-          const entries = statsEntries
-            .filter(([uid]) => !adminUids.has(uid))
-            .map(([uid, s]) => ({
-              uid,
-              displayName: s.displayName,
-              totalCorrect: s.totalCorrect,
-              totalQ: s.totalQ,
-              rate: s.totalQ > 0 ? Math.round((s.totalCorrect / s.totalQ) * 100) : 0,
-            }))
-            .sort((a, b) => b.rate - a.rate);
-          if (entries.length >= 1) quizRankingMap.set(cls.id, entries);
-        }
-        setQuizRankings(quizRankingMap);
-      } catch {}
-
-      setLoading(false);
+      setLoading(false); // ← ここで Home 画面の主要コンテンツが表示される
     };
 
-    loadData();
-  }, [userProfile, currentUser]);
+    loadMainData().catch(() => { if (!cancelled) setLoading(false); });
+    return () => { cancelled = true; };
+  }, [userProfile, currentUser, previewClassId]);
+
+  // ランキング系（重いので、メインUIが出てからバックグラウンドで取得）
+  useEffect(() => {
+    if (!currentUser || classes.length === 0) return;
+    let cancelled = false;
+
+    const loadRankings = async () => {
+      // --- クラス内・暗記数ランキング ---
+      const rankingMap = new Map<string, ClassRanking>();
+      await Promise.all(
+        classes.map(async (cls) => {
+          try {
+            const adminIds = new Set([cls.adminId, ...(cls.coAdminIds || [])]);
+            const allMemberIds: string[] = (cls.studentIds || []).filter((uid: string) => !adminIds.has(uid));
+
+            // role=admin のユーザーを除外（並列）
+            const userDocs = await Promise.all(
+              allMemberIds.map((uid) => getDoc(doc(db, 'users', uid)).catch(() => null))
+            );
+            const memberIds: string[] = allMemberIds.filter((_, i) => {
+              const ud = userDocs[i];
+              if (!ud) return true; // 失敗時は含める
+              return !ud.exists() || ud.data()?.role !== 'admin';
+            });
+            if (memberIds.length < 1) return;
+
+            const myStats = progressStats.get(cls.id);
+            const myMastered = myStats?.mastered || 0;
+
+            // 各メンバーの mastered 数を並列取得（最大30人）
+            const idsToLoad = memberIds.slice(0, 30);
+            const members = await Promise.all(
+              idsToLoad.map(async (uid) => {
+                if (uid === currentUser.uid) return { uid, mastered: myMastered };
+                try {
+                  const memberProgressDoc = await getDoc(doc(db, 'users', uid, 'progress', cls.id));
+                  let memberMastered = 0;
+                  if (memberProgressDoc.exists()) {
+                    Object.values(memberProgressDoc.data()).forEach((value: any) => {
+                      if (value.status === 'mastered') memberMastered++;
+                    });
+                  }
+                  return { uid, mastered: memberMastered };
+                } catch {
+                  return { uid, mastered: 0 };
+                }
+              })
+            );
+
+            members.sort((a, b) => b.mastered - a.mastered);
+            const myRank = members.findIndex((m) => m.uid === currentUser.uid) + 1;
+
+            // Top 3 の名前を取得（並列）
+            const topThreeMembers = members.slice(0, 3);
+            const topThreeDocs = await Promise.all(
+              topThreeMembers.map((m) => getDoc(doc(db, 'users', m.uid)).catch(() => null))
+            );
+            const topThree = topThreeMembers.map((m, i) => {
+              const ud = topThreeDocs[i];
+              const name = ud && ud.exists() ? ((ud.data() as any).displayName || 'Unknown') : 'Unknown';
+              return { name, mastered: m.mastered };
+            });
+
+            rankingMap.set(cls.id, {
+              topThree,
+              myMastered,
+              myRank: myRank || 1,
+              totalMembers: memberIds.length,
+            });
+          } catch {
+            /* ranking load failed, skip */
+          }
+        })
+      );
+      if (cancelled) return;
+      setClassRankings(rankingMap);
+
+      // --- クラス内・クイズ正答率ランキング ---
+      try {
+        const quizRankingMap = new Map<string, { uid: string; displayName: string; rate: number; totalCorrect: number; totalQ: number }[]>();
+        await Promise.all(
+          classes.map(async (cls) => {
+            const sessionsSnap = await getDocs(
+              query(collection(db, 'classes', cls.id, 'sessions'), where('status', '==', 'finished'))
+            );
+            // 各セッションの answers を並列取得
+            const sessionData = sessionsSnap.docs.map((d) => ({ data: d.data(), id: d.id }));
+            const answersSnaps = await Promise.all(
+              sessionData.map((s) => getDocs(collection(db, 'classes', cls.id, 'sessions', s.id, 'answers')))
+            );
+
+            const studentStats = new Map<string, { displayName: string; totalCorrect: number; totalQ: number }>();
+            sessionData.forEach((session, i) => {
+              const totalQ = session.data.wordIds?.length || 0;
+              const answersSnap = answersSnaps[i];
+              for (const answerDoc of answersSnap.docs) {
+                const data = answerDoc.data();
+                const uid = answerDoc.id;
+                const correct = (data.results || []).filter((r: any) => r.isCorrect).length;
+                if (!studentStats.has(uid)) {
+                  studentStats.set(uid, { displayName: data.displayName || 'Unknown', totalCorrect: 0, totalQ: 0 });
+                }
+                const s = studentStats.get(uid)!;
+                s.totalCorrect += correct;
+                s.totalQ += totalQ;
+              }
+            });
+
+            const classAdminIds = new Set([cls.adminId, ...(cls.coAdminIds || [])]);
+            const statsEntries = Array.from(studentStats.entries());
+
+            // role=admin チェック（並列）
+            const adminCheckDocs = await Promise.all(
+              statsEntries.map(([uid]) =>
+                classAdminIds.has(uid)
+                  ? Promise.resolve(null)
+                  : getDoc(doc(db, 'users', uid)).catch(() => null)
+              )
+            );
+            const adminUids = new Set<string>();
+            statsEntries.forEach(([uid], i) => {
+              if (classAdminIds.has(uid)) { adminUids.add(uid); return; }
+              const ud = adminCheckDocs[i];
+              if (ud && ud.exists() && ud.data()?.role === 'admin') adminUids.add(uid);
+            });
+
+            const entries = statsEntries
+              .filter(([uid]) => !adminUids.has(uid))
+              .map(([uid, s]) => ({
+                uid,
+                displayName: s.displayName,
+                totalCorrect: s.totalCorrect,
+                totalQ: s.totalQ,
+                rate: s.totalQ > 0 ? Math.round((s.totalCorrect / s.totalQ) * 100) : 0,
+              }))
+              .sort((a, b) => b.rate - a.rate);
+            if (entries.length >= 1) quizRankingMap.set(cls.id, entries);
+          })
+        );
+        if (!cancelled) setQuizRankings(quizRankingMap);
+      } catch {
+        /* ignore */
+      }
+    };
+
+    loadRankings();
+    return () => { cancelled = true; };
+    // progressStats が更新された時点でランキングを取得する（自分の数値を反映するため）
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [classes, currentUser, progressStats]);
 
   // メンテナンス解除時に自動リロード（クラスのlastUpdatedAtを監視）
   useEffect(() => {
@@ -291,7 +326,7 @@ const HomePage: React.FC = () => {
     return (
       <>
         <Header />
-        <div style={styles.loading}>読み込み中...</div>
+        <Loading message="ホーム画面を準備中..." fullScreen={false} />
       </>
     );
   }

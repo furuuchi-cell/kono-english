@@ -34,11 +34,14 @@ const GrammarQuizPage = lazy(() => import('./components/student/GrammarQuizPage'
 const GrammarClassTestPage = lazy(() => import('./components/student/GrammarClassTestPage'));
 
 const RootRedirect: React.FC = () => {
-  const { userProfile, loading } = useAuth();
+  const { currentUser, userProfile, loading } = useAuth();
 
   if (loading) return <Loading branded />;
-  if (!userProfile) return <Navigate to="/login" />;
-  if (userProfile.role === 'admin') return <Navigate to="/admin" />;
+  // currentUser はある（または onAuthStateChanged で来る）が userProfile がまだ
+  // → 即 /login に戻すと「入力リセット」バグになるので待つ
+  if (currentUser && !userProfile) return <Loading branded message="読み込み中..." />;
+  if (!currentUser) return <Navigate to="/login" />;
+  if (userProfile?.role === 'admin') return <Navigate to="/admin" />;
   return <Navigate to="/home" />;
 };
 

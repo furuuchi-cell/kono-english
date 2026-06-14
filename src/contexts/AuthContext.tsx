@@ -70,8 +70,20 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   }, []);
 
   const signIn = async (email: string, password: string) => {
-    await signInWithEmailAndPassword(auth, email, password);
-    // onAuthStateChanged がプロフィールを読み込むので追加処理不要
+    const result = await signInWithEmailAndPassword(auth, email, password);
+    // 重要: onAuthStateChanged はマイクロタスクで非同期に発火するため、
+    // ここで await せずに navigate('/') すると RootRedirect が userProfile=null
+    // のまま判定して /login へ突き返してしまう（＝入力リセットの原因）。
+    // signIn の戻り値より前にプロフィールと currentUser を確定させておく。
+    try {
+      const profileDoc = await getDoc(doc(db, 'users', result.user.uid));
+      if (profileDoc.exists()) {
+        setUserProfile(profileDoc.data() as UserProfile);
+      }
+    } catch {
+      /* プロフィール取得失敗時も onAuthStateChanged 側で再取得されるので致命的ではない */
+    }
+    setCurrentUser(result.user);
   };
 
   const signUp = async (email: string, password: string, displayName: string, role: 'student' | 'admin', furigana?: string) => {
