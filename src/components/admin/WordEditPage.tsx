@@ -13,6 +13,7 @@ interface WordOverride {
   example?: string;
   derivatives?: string;
   mnemonic?: string;
+  pronunciation?: string;
 }
 
 const WordEditPage: React.FC = () => {
@@ -52,6 +53,7 @@ const WordEditPage: React.FC = () => {
       example: override.example ?? w.example,
       derivatives: override.derivatives ?? w.derivatives,
       mnemonic: override.mnemonic ?? w.mnemonic,
+      pronunciation: override.pronunciation ?? w.pronunciation,
     };
   }, [overrides]);
 
@@ -64,6 +66,7 @@ const WordEditPage: React.FC = () => {
       example: merged.example,
       derivatives: merged.derivatives || '',
       mnemonic: merged.mnemonic || '',
+      pronunciation: merged.pronunciation || '',
     });
   };
 
@@ -209,6 +212,16 @@ const WordEditPage: React.FC = () => {
                       value={editForm.japanese || ''}
                       onChange={(e) => setEditForm({ ...editForm, japanese: e.target.value })}
                       style={styles.editInput}
+                    />
+                  </div>
+                  <div style={styles.editField}>
+                    <label style={styles.editLabel}>発音記号 <span style={{ fontSize: 11, color: '#9ca3af', fontWeight: 400 }}>（例: /ˈdez.ə.bəl/）</span></label>
+                    <input
+                      type="text"
+                      value={editForm.pronunciation || ''}
+                      onChange={(e) => setEditForm({ ...editForm, pronunciation: e.target.value })}
+                      style={{ ...styles.editInput, fontFamily: 'serif' }}
+                      placeholder="発音記号を入力"
                     />
                   </div>
                   <div style={styles.editField}>
